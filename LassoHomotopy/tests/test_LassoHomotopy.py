@@ -18,7 +18,7 @@ def load_data():
     return X, y.reshape(-1)
 
 def test_basic_prediction():
-    """Comprehensive test of basic prediction functionality with detailed reporting"""
+    """Comprehensive test of basic prediction functionality with detailed reporting with report"""
     # Initialize model with default parameters
     model = LassoHomotopyModel()
     #model = LassoHomotopyModel(alpha=0.5, fit_intercept=True, max_iter=1000)

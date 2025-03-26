@@ -274,7 +274,7 @@ class LassoHomotopy:
     
     
 class LassoHomotopyModel:
-    """User-friendly wrapper for LassoHomotopy"""
+    """User-friendly wrapper for LassoHomotopy method"""
     def __init__(self, alpha=1.0, max_iter=1000, tol=1e-4, fit_intercept=True):
         self.alpha = alpha
         self.max_iter = max_iter
