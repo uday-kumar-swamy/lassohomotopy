@@ -4,5 +4,4 @@ ipython
 pandas
 numpy
 matplotlib
-csv
 pytest
