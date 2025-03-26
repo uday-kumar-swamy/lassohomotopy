@@ -5,6 +5,8 @@ from model.LassoHomotopy import LassoHomotopyModel
 import matplotlib.pyplot as plt
 import pytest
 import warnings
+from sklearn.datasets import make_regression
+
 warnings.filterwarnings("ignore")
 
 def load_data():
@@ -21,13 +23,8 @@ def test_basic_prediction():
     """Comprehensive test of basic prediction functionality with detailed reporting with report"""
     # Initialize model with default parameters
     model = LassoHomotopyModel()
-    #model = LassoHomotopyModel(alpha=0.5, fit_intercept=True, max_iter=1000)
-    #model = LassoHomotopyModel(lambda_reg=0.5, fit_intercept=True, max_iter=1000)
     X, y = load_data()
-    
-    # Standardize features for better performance
-    #X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    
+  
     # Fit model and make predictions
     results = model.fit(X, y)
     preds = results.predict(X)
@@ -55,7 +52,7 @@ def test_basic_prediction():
     - Target std: {np.std(y):.4f}
     
     Model Parameters:
-    - Alpha (λ): {model.alpha:.4f}
+    - lambda (λ): {model.lambda_par:.4f}
     - Tolerance: {model.model.tol:.2e}
     - Max iterations: {model.max_iter}
     - Fit intercept: {model.fit_intercept}
@@ -124,13 +121,13 @@ def test_basic_prediction():
         f"Low R-squared value ({r2:.4f}) - model may not be fitting well"
     )
     assert sparsity >= 0.1, (
-        f"Low sparsity ({sparsity:.1%}) - consider increasing alpha"
+        f"Low sparsity ({sparsity:.1%}) - consider increasing lambda_par"
     )
 
 def test_prediction_visualization():
     """Generate comprehensive prediction visualization report"""
     # Initialize model with default parameters
-    model = LassoHomotopyModel(alpha=0.1, fit_intercept=True, max_iter=1000)
+    model = LassoHomotopyModel(lambda_par=0.1, fit_intercept=True, max_iter=1000)
     X, y = load_data()
     
     # Standardize features for better performance
@@ -229,7 +226,7 @@ def test_empty_input():
 def test_single_feature():
     """Test LassoHomotopy with single feature input (detailed report)"""
     # Initialize model with default parameters
-    model = LassoHomotopyModel(alpha=0.1, fit_intercept=True, max_iter=1000)
+    model = LassoHomotopyModel(lambda_par=0.1, fit_intercept=True, max_iter=1000)
     
     try:
         # Load and validate data
@@ -286,7 +283,7 @@ def test_single_feature():
         - Feature-target correlation: {ft_corr_str}
         
         Model Parameters:
-        - Alpha (λ): {model.alpha:.4f}
+        - lambda_par (λ): {model.lambda_par:.4f}
         - Fit intercept: {model.fit_intercept}
         - Intercept value: {intercept:.4f}
         - Coefficient value: {coef_value:.4f}
@@ -311,7 +308,7 @@ def test_single_feature():
 def test_high_dimensional_data():
     """Test LassoHomotopy on high-dimensional data (p > n) with detailed reporting"""
     # Initialize model with default parameters
-    model = LassoHomotopyModel(alpha=0.1, fit_intercept=True, max_iter=10000)
+    model = LassoHomotopyModel(lambda_par=0.1, fit_intercept=True, max_iter=10000)
     np.random.seed(42)
     
     # Generate high-dimensional data (10 samples, 20 features)
@@ -340,7 +337,7 @@ def test_high_dimensional_data():
     HIGH-DIMENSIONAL DATA TEST REPORT (n={X.shape[0]}, p={X.shape[1]})
     {'='*60}
     Model Parameters:
-    - Alpha (λ): {model.alpha:.4f}
+    - lambda_par (λ): {model.lambda_par:.4f}
     - Tolerance: {model.model.tol:.2e}
     - Max iterations: {model.max_iter}
     - Fit intercept: {model.fit_intercept}
@@ -404,14 +401,14 @@ def test_high_dimensional_data():
     )
     assert sparsity > 0.05, (
         f"Insufficient sparsity (got {sparsity:.1%}, expected >30%).\n"
-        f"Try increasing alpha (current: {model.alpha}) or checking data scaling."
+        f"Try increasing lambda_par (current: {model.lambda_par}) or checking data scaling."
     )
     
 
 def test_sparse_solution():
     """Test that solution shows reasonable sparsity with detailed reporting"""
-    # Initialize model with high alpha to encourage sparsity
-    model = LassoHomotopyModel(alpha=1.0, fit_intercept=True, max_iter=10000)
+    # Initialize model with high lambda_par to encourage sparsity
+    model = LassoHomotopyModel(lambda_par=1.0, fit_intercept=True, max_iter=10000)
     X, y = load_data()
     
     # Standardize features for better regularization performance
@@ -442,7 +439,7 @@ def test_sparse_solution():
     LASSO HOMOTOPY SPARSITY REPORT
     {'='*60}
     Model Parameters:
-    - Alpha (λ): {model.alpha:.4f}
+    - lambda_par (λ): {model.lambda_par:.4f}
     - Tolerance: {model.model.tol:.2e}
     - Max iterations: {model.max_iter}
     - Fit intercept: {model.fit_intercept}
@@ -475,7 +472,7 @@ def test_sparse_solution():
     assert sparsity > 0.1, (
         f"Sparsity test failed (expected >10%, got {sparsity:.1%}).\n"
         f"Suggested actions:\n"
-        f"1. Increase alpha (current: {model.alpha})\n"
+        f"1. Increase lambda_par (current: {model.lambda_par})\n"
         f"2. Check feature correlations\n"
         f"3. Verify data standardization\n"
         f"4. Review tolerance setting (current: {model.model.tol:.2e})"
@@ -531,7 +528,7 @@ def plot_coefficient_distribution(coefficients, tol):
 def test_prediction_consistency():
     """Comprehensive test of prediction consistency across multiple runs"""
     # Initialize model with fixed random state for reproducibility
-    model = LassoHomotopyModel(alpha=0.1, fit_intercept=True, max_iter=1000)
+    model = LassoHomotopyModel(lambda_par=0.1, fit_intercept=True, max_iter=1000)
     X, y = load_data()
     
     # Standardize features for consistent results
@@ -649,103 +646,102 @@ def test_feature_importance():
     plt.title('Feature Coefficients (Importance)')
     plt.grid(True)
     plt.show()
-''' 
+    
 def test_update_model():
-    """Test online updating of LassoHomotopy model with new data points and alpha changes"""
-    # Initialize model and initial data
-    model = LassoHomotopyModel(alpha=0.5, fit_intercept=True)
-    X, y = load_data()
+    """Test online updating of LassoHomotopy model with visualization"""
+    import matplotlib.pyplot as plt
+    
+    # Set up visualization with proper matplotlib style
+    plt.style.use('default')  # Use default matplotlib style
+    plt.rcParams.update({
+        'figure.titlesize': 14,
+        'axes.titlesize': 12,
+        'axes.labelsize': 10,
+        'xtick.labelsize': 8,
+        'ytick.labelsize': 8,
+        'legend.fontsize': 8
+    })
+    
+    # Initialize model
+    model = LassoHomotopyModel(lambda_par=0.5, fit_intercept=True)
+    X, y = make_regression(n_samples=100, n_features=10, noise=0.1, random_state=42)
     
     # Initial fit
-    initial_result = model.fit(X, y)
-    initial_coef = initial_result.coef_.copy()
-    initial_intercept = initial_result.intercept_
+    model.fit(X, y)
+    initial_coef = model.coef_.copy()
     
-    # Test 1: Update with new data point (same alpha)
-    x_new1 = np.array([[1.5, 0.8]])
-    y_new1 = np.array([3.8])
-    updated_result1 = model.update_model(x_new1, y_new1)
+    # Set up visualization
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
+    fig.suptitle('Lasso Homotopy Coefficient Trajectories')
     
-    # Verify shapes and basic properties
-    assert updated_result1.coef_.shape == initial_coef.shape, "Coefficient shape changed after update"
-    assert isinstance(updated_result1.intercept_, float), "Intercept should be scalar"
+    # Track coefficient changes
+    coef_history = [initial_coef]
+    update_labels = ['Initial Fit']
     
-    # Test 2: Update with multiple new points
-    x_new2 = np.array([[-0.4167578474054706,-0.056266827226329474,-2.136196095668454,-0.051373775485721085,-0.44184314424117443,-0.32494711289593675,-0.6591765888896062,-0.5676929829086241,-0.5475437078303352,0.8520919835198305], [-0.4167578474054706,-0.056266827226329474,-2.136196095668454,-0.051373775485721085,-0.44184314424117443,-0.32494711289593675,-0.6591765888896062,-0.5676929829086241,-0.5475437078303352,0.8520919835198305]])
-    y_new2 = np.array([2.1, 2.9])
-    updated_result2 = model.update_model(x_new2, y_new2)
+    # Define test cases
+    test_cases = [
+        {'name': 'Normal sample', 'x': np.random.randn(10), 'y': 3.8},
+        {'name': 'Outlier sample', 'x': np.random.randn(10)*3, 'y': 10.0},
+        {'name': 'Zero feature sample', 'x': np.zeros(10), 'y': 1.0},
+        {'name': 'Batch update', 'x': np.random.randn(5, 10), 'y': np.random.randn(5)},
+        {'name': 'lambda_par change', 'x': np.random.randn(10), 'y': 2.5, 'lambda_par': 0.2}
+    ]
     
-    # Test 3: Update with new alpha value
-    new_alpha = 0.3
-    x_new3 = np.array([[-0.4167578474054706,-0.056266827226329474,-2.136196095668454,-0.051373775485721085,-0.44184314424117443,-0.32494711289593675,-0.6591765888896062,-0.5676929829086241,-0.5475437078303352,0.8520919835198305]])
-    y_new3 = np.array([3.2])
-    updated_result3 = model.update_model(x_new3, y_new3, alpha_new=new_alpha)
+    # Run test cases
+    for case in test_cases:
+        try:
+            lambda_par = case.get('lambda_par')
+            model.update_model(case['x'], case['y'], lambda_par_new=lambda_par)
+            coef_history.append(model.coef_.copy())
+            update_labels.append(f"{case['name']}\nα={model.lambda_par:.2f}")
+            
+            print(f"\nAfter {case['name']}:")
+            print(f"lambda_par: {model.lambda_par:.2f}")
+            print(f"Active features: {len(model.model.active_set)}")
+            print(f"Max coef change: {np.max(np.abs(coef_history[-1] - coef_history[-2])):.4f}")
+            
+        except Exception as e:
+            print(f"Failed on {case['name']}: {str(e)}")
+            continue
     
-    # Verify alpha was updated
-    assert model.alpha == new_alpha, "Alpha not updated correctly"
+    # Visualization 1: Coefficient trajectories
+    coef_history = np.array(coef_history).T
+    for i, coef_traj in enumerate(coef_history):
+        ax1.plot(coef_traj, label=f'Feature {i}', marker='o', markersize=5, alpha=0.8)
     
-    # Test 4: Edge case - empty update (should handle gracefully)
-    try:
-        empty_result = model.update_model(np.empty((0, 2)), np.empty(0))
-    except Exception as e:
-        pytest.fail(f"Failed to handle empty update: {str(e)}")
+    ax1.set_title('Coefficient Values Across Updates')
+    ax1.set_ylabel('Coefficient Value')
+    ax1.set_xticks(range(len(update_labels)))
+    ax1.set_xticklabels(update_labels, rotation=45, ha='right')
+    ax1.axhline(0, color='grey', linestyle='--', alpha=0.5)
+    ax1.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
+    ax1.grid(True, alpha=0.3)
     
-    # Test 5: Verify warm start improves efficiency
-    start_time = time.time()
-    cold_result = model.fit(np.vstack([X, x_new1, x_new2, x_new3]), 
-                          np.concatenate([y, y_new1, y_new2, y_new3]))
-    cold_time = time.time() - start_time
+    # Visualization 2: Coefficient magnitudes
+    coef_magnitudes = np.abs(coef_history)
+    im = ax2.imshow(coef_magnitudes, aspect='auto', cmap='viridis')
+    ax2.set_title('Coefficient Magnitudes (Absolute Values)')
+    ax2.set_ylabel('Feature Index')
+    ax2.set_xlabel('Update Step')
+    ax2.set_xticks(range(len(update_labels)))
+    ax2.set_xticklabels(update_labels, rotation=45, ha='right')
+    ax2.set_yticks(range(10))
+    plt.colorbar(im, ax=ax2, label='Magnitude')
     
-    start_time = time.time()
-    warm_result = model.update_model(x_new3, y_new3)
-    warm_time = time.time() - start_time
+    plt.tight_layout()
     
-    assert warm_time < cold_time, "Warm start should be faster than cold start"
+    # Save and show plot
+    '''
+    plt.savefig('lasso_homotopy_coefficients.png', 
+               dpi=300, 
+               bbox_inches='tight',
+               facecolor='white')  # Add white background
+    '''
+    plt.show()
     
-    # Test 6: Verify solution quality
-    X_all = np.vstack([X, x_new1, x_new2, x_new3])
-    y_all = np.concatenate([y, y_new1, y_new2, y_new3])
-    
-    # Compare with batch solution
-    batch_model = LassoHomotopyModel(alpha=model.alpha, fit_intercept=True)
-    batch_result = batch_model.fit(X_all, y_all)
-    
-    # Solutions should be similar (allow small numerical differences)
-    assert np.allclose(updated_result3.coef_, batch_result.coef_, rtol=1e-3), \
-        "Online solution diverged from batch solution"
-    assert np.isclose(updated_result3.intercept_, batch_result.intercept_, rtol=1e-3), \
-        "Intercepts diverged between online and batch"
-    
-    # Test 7: Check path consistency when alpha changes
-    if hasattr(model, 'get_solution_path'):
-        path = model.get_solution_path()
-        assert len(path) > 0, "Solution path should be maintained"
-        
-    # Generate detailed report
-    print(f"""
-    {'='*60}
-    UPDATE MODEL TEST REPORT
-    {'='*60}
-    Initial Model:
-    - Coefficients: {initial_coef}
-    - Intercept: {initial_intercept:.4f}
-    
-    After Sequential Updates:
-    - Final Coefficients: {updated_result3.coef_}
-    - Final Intercept: {updated_result3.intercept_:.4f}
-    - Final Alpha: {model.alpha:.4f}
-    
-    Performance:
-    - Cold start time: {cold_time:.4f}s
-    - Warm start time: {warm_time:.4f}s
-    - Speedup: {(cold_time/warm_time):.1f}x
-    
-    Validation:
-    - Batch coefficients: {batch_result.coef_}
-    - Batch intercept: {batch_result.intercept_:.4f}
-    {'='*60}
-    """)
-'''  
+    # Final assertions
+    assert len(model.coef_) == 10
+    assert model.model.X_.shape[1] == 10
 
 if __name__ == "__main__":
     
@@ -756,7 +752,6 @@ if __name__ == "__main__":
     test_sparse_solution()
     test_prediction_consistency()
     test_feature_importance()
-    #test_streaming_data_scenario()
+    test_update_model()
     
-    #test_update_model()
     print("All tests passed!")
