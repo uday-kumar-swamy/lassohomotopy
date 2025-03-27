@@ -12,17 +12,9 @@
 
 ## Project Overview
 
-This project implements the LASSO (Least Absolute Shrinkage and Selection Operator) regression model using the Homotopy Method as described in [Garrigues & El Ghaoui (2008)](https://people.eecs.berkeley.edu/~elghaoui/Pubs/hom_lasso_NIPS08.pdf). The implementation provides:
+This project implements the LASSO (Least Absolute Shrinkage and Selection Operator) regression model using the Homotopy Method as described in [Garrigues & El Ghaoui (2008)](https://people.eecs.berkeley.edu/~elghaoui/Pubs/hom_lasso_NIPS08.pdf). The implementation provides a comprehensive solution for ℓ₁-regularized least squares problems, featuring both batch initialization and online learning capabilities through homotopy continuation. Following the theoretical framework established in the original paper, our implementation efficiently computes solution paths by leveraging the piecewise linear nature of LASSO solutions under parameter variation. The system incorporates proper data standardization and numerical stability safeguards, including careful handling of active set changes and rank-one matrix updates using the Sherman-Morrison formula.
 
-- Batch initialization of the LASSO model
-- Online updates via homotopy continuation
-- Proper data standardization
-- Numerical stability safeguards
-
-Key features:
-- Efficient handling of sequential/streaming data
-- Automatic regularization parameter updates
-- Visualization tools for model evaluation
+Key features include efficient handling of sequential/streaming data through the Reclasso algorithm, which maintains computational efficiency by exploiting the solution's local linearity between critical points. As demonstrated in the original work, our implementation shows particular advantages when the active set changes are infrequent, achieving O(kd²) complexity per update where d is the active set size. The system also implements the paper's proposed automatic regularization parameter update rule that adapts λ based on new observations. For model evaluation, we provide visualization tools that track coefficient trajectories, residual patterns, and solution paths - mirroring the diagnostic approaches used in the reference paper to analyze homotopy continuation behavior. The implementation maintains the theoretical guarantees of the homotopy approach while adding practical enhancements for real-world use, including improved numerical stability for ill-conditioned problems and support for standardized data preprocessing.
 
 ## Team
 - Medhavini Puthalapattu (A20551170)
@@ -30,19 +22,21 @@ Key features:
 - Sai Kartheek Goli (A20546631)
 - Uday Venkatesha (A20547055)
 
-## Implementation Details
 
-The core algorithm (`LassoHomotopy` class) implements:
-1. Batch initialization using coordinate descent
-2. Online updates via homotopy continuation
-3. Efficient rank-1 matrix updates using Sherman-Morrison formula
-4. Active set management for sparse solutions
+## Implementation Overview
 
-The implementation handles:
-- Standardization/normalization of input data
-- Intercept term fitting
-- Regularization path computation
+The core algorithm (`LassoHomotopy` class) implements a complete solution for LASSO regression using homotopy methods. Key components include batch initialization via coordinate descent and efficient online updates through homotopy continuation. The system leverages rank-1 matrix updates (Sherman-Morrison formula) for computational efficiency while maintaining exact solution paths.
+
+## Core Features
+
+The implementation provides comprehensive handling of:
+- Data standardization/normalization
+- Intercept term computation
+- Regularization path calculation
+- Active set management
 - Transition point detection
+
+These components work together to deliver both batch processing capabilities and efficient online updates, following the theoretical framework established in the original research.
 
 ## Installation
 
@@ -116,7 +110,7 @@ plt.show()
 
 ## Testing
 
-The test suite includes:
+The comprehensive test suite includes:
 
 | Test Case | Description | Key Metrics |
 |-----------|-------------|-------------|
@@ -127,14 +121,15 @@ The test suite includes:
 | `test_sparse_solution` | Collinear data | Non-zero counts |
 | `test_prediction_consistency` | Deterministic behavior | Prediction diffs |
 | `test_update_model` | Online learning | Coefficient trajectories |
+| `test_with_builtin_models` | BenchMark Testing | MSE, MAE, Co-effs |
 
 Run all tests:
 ```bash
-pytest test_LassoHomotopy.py -v
+pytest test_LassoHomotopy.py -s
 ```
 
-Sample output visualization:
-### basic report
+### Basic Report Testing
+
 **Purpose**:  
 This comprehensive test validates the core functionality of the LassoHomotopy model by:
 
@@ -162,13 +157,13 @@ This comprehensive test validates the core functionality of the LassoHomotopy mo
 
 This test serves as the foundation for verifying that the model meets basic LASSO regression expectations before proceeding to more specialized tests.
 
-**Example Output**:
+**Output**:
 ![Basic report](LassoHomotopy/images/basic_report.png)
 
 ![Basic prediction](LassoHomotopy/images/basic_prediction.png)
 
 
-### update model
+### Update Model Testing
 
 **Purpose**:  
 This test validates the online updating capability of the LassoHomotopy model by:
@@ -208,7 +203,7 @@ This test validates the online updating capability of the LassoHomotopy model by
 
 This test is particularly valuable for streaming data applications, demonstrating how the model maintains performance while efficiently incorporating new information.
 
-**Example Output**:
+**Output**:
 ![onlineupdate](LassoHomotopy/images/onlineupdate.png)
 
 
@@ -249,7 +244,7 @@ This benchmark test compares our LassoHomotopy implementation against scikit-lea
 
 
 **Example Visualization**:
-![Benchmark Comparison](images/benchmarkcompare_dark.png)
+![Benchmark Comparison](LassoHomotopy/images/benchmarkcompare_dark.png)
 
 This test serves as both a validation of our implementation and a demonstration of how it compares to a standard LASSO implementation in terms of both performance and sparsity characteristics.
 
@@ -344,6 +339,7 @@ We implemented a comprehensive test suite that verifies:
 - Non-convex variants (e.g., ℓ₀ penalty) would require new approach
 
 The implementation shows particularly strong performance on streaming data applications while maintaining the theoretical guarantees of the homotopy approach. The test suite verifies both statistical properties and computational efficiency across various problem regimes.
+
 
 ## References
 
