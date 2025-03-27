@@ -6,6 +6,9 @@ import matplotlib.pyplot as plt
 import pytest
 import warnings
 from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import Lasso
+from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 
 warnings.filterwarnings("ignore")
 
@@ -20,7 +23,8 @@ def load_data():
     return X, y.reshape(-1)
 
 def test_basic_prediction():
-    """Comprehensive test of basic prediction functionality with detailed reporting with report"""
+    """Comprehensive test of basic prediction 
+    functionality with detailed reporting with report"""
     # Initialize model with default parameters
     model = LassoHomotopyModel()
     X, y = load_data()
@@ -76,39 +80,73 @@ def test_basic_prediction():
     {'='*60}
     """
     print(report)
-    
-    # Create visualizations
-    plt.figure(figsize=(18, 5))
-    
+    plt.style.use('dark_background')
+
+    # Create figure with custom title
+    fig = plt.figure(figsize=(18, 6), facecolor='#121212')
+    fig.suptitle('Basic Predictions', 
+                fontsize=14, fontweight='bold', y=1.02)
+
     # Plot 1: Actual vs Predicted values
-    plt.subplot(1, 3, 1)
-    plt.scatter(y, preds, alpha=0.6, color='royalblue')
-    plt.plot([min(y), max(y)], [min(y), max(y)], 'r--', linewidth=1)
-    plt.title('Actual vs Predicted Values', fontsize=12)
-    plt.xlabel('Actual Values', fontsize=10)
-    plt.ylabel('Predicted Values', fontsize=10)
-    plt.grid(True, alpha=0.3)
-    
-    # Plot 2: Coefficient magnitudes
-    plt.subplot(1, 3, 2)
-    plt.stem(np.arange(len(coefficients)), coefficients, markerfmt=' ')
-    plt.axhline(0, color='black', linewidth=0.5)
-    plt.title('Feature Coefficients', fontsize=12)
-    plt.xlabel('Feature Index', fontsize=10)
-    plt.ylabel('Coefficient Value', fontsize=10)
-    
-    # Plot 3: Prediction error distribution
-    plt.subplot(1, 3, 3)
+    ax1 = plt.subplot(1, 3, 1)
+    sc = ax1.scatter(y, preds, alpha=0.7, color='#1f77b4', 
+                    edgecolors='white', linewidths=0.3)
+    ax1.plot([min(y), max(y)], [min(y), max(y)], 
+            'r--', linewidth=1.5, label='Perfect Prediction')
+    ax1.set_title('Actual vs Predicted Values', fontsize=13, pad=15, color='white')
+    ax1.set_xlabel('Actual Values', fontsize=11, color='white')
+    ax1.set_ylabel('Predicted Values', fontsize=11, color='white')
+    ax1.grid(color='gray', linestyle=':', alpha=0.2)
+    ax1.legend(fontsize=10)
+
+    # Plot 2: Coefficient magnitudes (enhanced stem plot)
+    ax2 = plt.subplot(1, 3, 2)
+    markerline, stemlines, baseline = ax2.stem(
+        np.arange(len(coefficients)), 
+        coefficients,
+        linefmt='#2ca02c',
+        markerfmt='o',
+        basefmt='gray'
+    )
+    plt.setp(stemlines, 'linewidth', 1.5)
+    plt.setp(markerline, 'markersize', 5, 'color', '#ff7f0e')
+    ax2.axhline(0, color='white', linewidth=0.8, alpha=0.5)
+    ax2.set_title('Feature Coefficients', fontsize=13, pad=15, color='white')
+    ax2.set_xlabel('Feature Index', fontsize=11, color='white')
+    ax2.set_ylabel('Coefficient Value', fontsize=11, color='white')
+    ax2.grid(color='gray', linestyle=':', alpha=0.2)
+
+    # Highlight significant coefficients
+    sig_coefs = np.where(np.abs(coefficients) > 0.1)[0]
+    for i in sig_coefs:
+        ax2.annotate(f'{coefficients[i]:.2f}',
+                    (i, coefficients[i]),
+                    textcoords="offset points",
+                    xytext=(0,10),
+                    ha='center',
+                    color='white')
+
+    # Plot 3: Prediction error distribution (enhanced)
+    ax3 = plt.subplot(1, 3, 3)
     errors = y - preds
-    plt.hist(errors, bins=30, color='purple', alpha=0.7)
-    plt.axvline(0, color='black', linestyle='--')
-    plt.title('Prediction Error Distribution', fontsize=12)
-    plt.xlabel('Prediction Error', fontsize=10)
-    plt.ylabel('Frequency', fontsize=10)
-    
+    n, bins, patches = ax3.hist(errors, bins=30, 
+                            color='#9467bd', 
+                            alpha=0.8,
+                            edgecolor='white',
+                            linewidth=0.5)
+    ax3.axvline(0, color='white', linestyle='--', linewidth=1.2)
+    ax3.axvline(np.mean(errors), color='red', linestyle='-', 
+            linewidth=1.5, label=f'Mean: {np.mean(errors):.2f}')
+    ax3.set_title('Prediction Error Distribution', fontsize=13, pad=15, color='white')
+    ax3.set_xlabel('Prediction Error', fontsize=11, color='white')
+    ax3.set_ylabel('Frequency', fontsize=11, color='white')
+    ax3.legend(fontsize=10)
+    ax3.grid(color='gray', linestyle=':', alpha=0.2)
+
     plt.tight_layout()
+    plt.savefig('../images/basic_prediction.png', dpi=300, bbox_inches='tight')
     plt.show()
-    
+        
     # Assertions with helpful messages
     assert preds is not None, "Model failed to generate predictions"
     assert preds.shape == y.shape, (
@@ -202,6 +240,8 @@ def test_prediction_visualization():
     plt.grid(True, alpha=0.3)
     
     plt.tight_layout()
+    # Save and show plot
+    plt.savefig('../images/prediction_visualization.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     # Additional diagnostic: Residuals vs Predicted
@@ -212,6 +252,7 @@ def test_prediction_visualization():
     plt.xlabel('Predicted Values', fontsize=10)
     plt.ylabel('Residuals', fontsize=10)
     plt.grid(True, alpha=0.3)
+    plt.savefig('../images/ResidualsvsPredicted.png', dpi=300, bbox_inches='tight')
     plt.show()
 
 def test_empty_input():
@@ -224,7 +265,9 @@ def test_empty_input():
         model.fit(X, y)
 
 def test_single_feature():
-    """Test LassoHomotopy with single feature input (detailed report)"""
+    """Test LassoHomotopy with single feature input (with visualization)"""
+    import matplotlib.pyplot as plt
+    
     # Initialize model with default parameters
     model = LassoHomotopyModel(lambda_par=0.1, fit_intercept=True, max_iter=1000)
     
@@ -238,38 +281,57 @@ def test_single_feature():
         X_single = X[:, 0:1]  # Maintain 2D shape (n_samples, 1)
         X_single = (X_single - np.mean(X_single)) / np.std(X_single)
         
-        # Calculate feature-target correlation safely
-        try:
-            ft_corr = np.corrcoef(X_single.flatten(), y)[0,1]
-            ft_corr_str = f"{ft_corr:.4f}"
-        except:
-            ft_corr_str = "N/A"
+        # Calculate feature-target correlation
+        ft_corr = np.corrcoef(X_single.flatten(), y)[0,1]
         
-        # Fit model with validation
+        # Fit model
         results = model.fit(X_single, y)
-        assert hasattr(results, 'coef_'), "Model fitting failed - no coefficients attribute"
         coefficients = results.coef_
         intercept = results.intercept_ if hasattr(results, 'intercept_') else 0
-        
-        # Safe coefficient access
         coef_value = coefficients[0] if coefficients.size > 0 else 0
         
-        # Generate predictions safely
-        preds = results.predict(X_single) if hasattr(results, 'predict') else np.zeros_like(y)
+        # Generate predictions
+        preds = results.predict(X_single)
         
-        # Calculate performance metrics with checks
-        mse = np.mean((preds - y)**2) if preds.size > 0 else float('inf')
-        
-        # Calculate correlation and R-squared safely
-        try:
-            corr = np.corrcoef(preds, y)[0, 1] if preds.size > 1 else 0
-            corr_str = f"{corr:.4f}"
-            r_squared = 1 - (np.sum((y - preds)**2) / np.sum((y - np.mean(y))**2)) if len(y) > 1 else 0
-            r_squared_str = f"{r_squared:.4f}"
-        except:
-            corr_str = "N/A"
-            r_squared_str = "N/A"
+        # Calculate performance metrics
+        mse = np.mean((preds - y)**2)
+        corr = np.corrcoef(preds, y)[0, 1]
+        r_squared = 1 - (np.sum((y - preds)**2) / np.sum((y - np.mean(y))**2))
 
+        # Create visualization
+        
+        fig = plt.figure(figsize=(12, 6))
+        
+        fig.suptitle('Lasso Homotopy - Single Feature Analysis', 
+                    fontsize=14, fontweight='bold', y=1.02)
+        
+        # Scatter plot of actual vs predicted
+        ax1 = plt.subplot(1, 2, 1)
+        ax1.scatter(X_single, y, alpha=0.5, label='Actual', color='cyan')
+        ax1.scatter(X_single, preds, alpha=0.5, label='Predicted', color='magenta')
+        ax1.set_xlabel('Standardized Feature Value', color='white')
+        ax1.set_ylabel('Target Value', color='white')
+        ax1.set_title('Actual vs Predicted Values', color='white', pad=20)
+        ax1.legend()
+        ax1.grid(color='gray', linestyle=':', alpha=0.3)
+        
+        # Regression line plot
+        ax2 = plt.subplot(1, 2, 2)
+        x_vals = np.linspace(X_single.min(), X_single.max(), 100)
+        y_vals = coef_value * x_vals + intercept
+        ax2.scatter(X_single, y, alpha=0.3, color='cyan')
+        ax2.plot(x_vals, y_vals, color='yellow', 
+                linewidth=2,
+                label=f'y = {coef_value:.2f}x + {intercept:.2f}')
+        ax2.set_xlabel('Standardized Feature Value', color='white')
+        ax2.set_ylabel('Target Value', color='white')
+        ax2.set_title('Regression Line Fit', color='white', pad=20)
+        ax2.legend()
+        ax2.grid(color='gray', linestyle=':', alpha=0.3)
+        
+        plt.tight_layout()
+        
+        
         # Generate comprehensive report
         report = f"""
         {'='*60}
@@ -280,7 +342,7 @@ def test_single_feature():
         - Features: {X_single.shape[1]}
         - Target mean: {np.mean(y):.4f}
         - Target std: {np.std(y):.4f}
-        - Feature-target correlation: {ft_corr_str}
+        - Feature-target correlation: {ft_corr:.4f}
         
         Model Parameters:
         - lambda_par (λ): {model.lambda_par:.4f}
@@ -290,15 +352,16 @@ def test_single_feature():
         
         Performance Metrics:
         - Mean Squared Error: {mse:.4f}
-        - R-squared: {r_squared_str}
-        - Prediction-Target Correlation: {corr_str}
+        - R-squared: {r_squared:.4f}
+        - Prediction-Target Correlation: {corr:.4f}
         
         {'='*60}
         """
         print(report)
         
-        # Rest of your visualization and assertion code remains the same...
-        # [Previous visualization and assertion code here]
+        # Save and show plot
+        plt.savefig('../images/single_feature_test.png', dpi=300, bbox_inches='tight')
+        plt.show()
         
     except Exception as e:
         print(f"Test failed with error: {str(e)}")
@@ -363,7 +426,7 @@ def test_high_dimensional_data():
     
     # Visualizations
     plt.figure(figsize=(15, 5))
-    
+    plt.suptitle("High dimentional data",fontsize=14, fontweight='bold', y=1.02)
     # Plot coefficients
     plt.subplot(1, 3, 1)
     plt.stem(np.arange(len(coefficients)), coefficients, markerfmt=' ')
@@ -392,6 +455,7 @@ def test_high_dimensional_data():
     plt.legend()
     
     plt.tight_layout()
+    plt.savefig('../images/HighdimentionalData.png', dpi=300, bbox_inches='tight')
     plt.show()
     
     # Assertions with helpful messages
@@ -410,9 +474,6 @@ def test_sparse_solution():
     # Initialize model with high lambda_par to encourage sparsity
     model = LassoHomotopyModel(lambda_par=1.0, fit_intercept=True, max_iter=10000)
     X, y = load_data()
-    
-    # Standardize features for better regularization performance
-    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
     
     # Fit model
     results = model.fit(X, y)
@@ -496,9 +557,9 @@ def generate_coeff_table(coefficients, n):
 
 def plot_coefficient_distribution(coefficients, tol):
     """Visualize coefficient distribution"""
-    import matplotlib.pyplot as plt
     
     plt.figure(figsize=(12, 6))
+    plt.suptitle("coefficient distribution",fontsize=14, fontweight='bold', y=1.02)
     
     # Plot coefficient values
     plt.subplot(1, 2, 1)
@@ -523,6 +584,7 @@ def plot_coefficient_distribution(coefficients, tol):
     plt.legend()
     
     plt.tight_layout()
+    plt.savefig('../images/coefficientdistribution.png', dpi=300, bbox_inches='tight')
     plt.show()
     
 def test_prediction_consistency():
@@ -577,9 +639,9 @@ def test_prediction_consistency():
     
     # Create visualizations
     plt.figure(figsize=(15, 5))
-    
+    plt.suptitle("Prediction Consistency",fontsize=14, fontweight='bold', y=1.02)
     # Plot 1: Prediction comparison scatter plot
-    plt.subplot(1, 3, 1)
+    plt.subplot(1, 2, 1)
     plt.scatter(preds1, preds2, alpha=0.6, color='blue')
     plt.plot([min(preds1), max(preds1)], [min(preds1), max(preds1)], 'r--')
     plt.title('Prediction Run 1 vs Run 2', fontsize=12)
@@ -588,23 +650,15 @@ def test_prediction_consistency():
     plt.grid(True, alpha=0.3)
     
     # Plot 2: Differences distribution
-    plt.subplot(1, 3, 2)
+    plt.subplot(1, 2, 2)
     plt.hist(diffs, bins=30, color='green', alpha=0.7)
     plt.axvline(1e-4, color='red', linestyle='--', label='Tolerance threshold')
     plt.title('Prediction Differences Distribution', fontsize=12)
     plt.xlabel('Absolute Difference', fontsize=10)
     plt.ylabel('Frequency', fontsize=10)
     plt.legend(fontsize=9)
-    
-    # Plot 3: Differences by sample index
-    plt.subplot(1, 3, 3)
-    plt.stem(np.arange(len(diffs)), diffs, markerfmt=' ', basefmt=" ")
-    plt.axhline(1e-4, color='red', linestyle='--')
-    plt.title('Differences by Sample Index', fontsize=12)
-    plt.xlabel('Sample Index', fontsize=10)
-    plt.ylabel('Absolute Difference', fontsize=10)
-    
     plt.tight_layout()
+    plt.savefig("../images/predictionconfig.png",dpi=300, bbox_inches='tight')
     plt.show()
     
     # Show detailed differences if test fails
@@ -645,6 +699,7 @@ def test_feature_importance():
     plt.ylabel('Coefficient Value')
     plt.title('Feature Coefficients (Importance)')
     plt.grid(True)
+    plt.savefig("../images/eatureimportance.png",dpi=300, bbox_inches='tight')
     plt.show()
     
 def test_update_model():
@@ -671,8 +726,9 @@ def test_update_model():
     initial_coef = model.coef_.copy()
     
     # Set up visualization
+    plt.style.use('dark_background')
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
-    fig.suptitle('Lasso Homotopy Coefficient Trajectories')
+    fig.suptitle('Lasso Homotopy Coefficient Trajectories',fontsize=14, fontweight='bold', y=1.02)
     
     # Track coefficient changes
     coef_history = [initial_coef]
@@ -693,7 +749,7 @@ def test_update_model():
             lambda_par = case.get('lambda_par')
             model.update_model(case['x'], case['y'], lambda_par_new=lambda_par)
             coef_history.append(model.coef_.copy())
-            update_labels.append(f"{case['name']}\nα={model.lambda_par:.2f}")
+            update_labels.append(f"{case['name']}\nλ={model.lambda_par:.2f}")
             
             print(f"\nAfter {case['name']}:")
             print(f"lambda_par: {model.lambda_par:.2f}")
@@ -703,6 +759,7 @@ def test_update_model():
         except Exception as e:
             print(f"Failed on {case['name']}: {str(e)}")
             continue
+    
     
     # Visualization 1: Coefficient trajectories
     coef_history = np.array(coef_history).T
@@ -729,22 +786,154 @@ def test_update_model():
     plt.colorbar(im, ax=ax2, label='Magnitude')
     
     plt.tight_layout()
-    
-    # Save and show plot
-    '''
-    plt.savefig('lasso_homotopy_coefficients.png', 
-               dpi=300, 
-               bbox_inches='tight',
-               facecolor='white')  # Add white background
-    '''
+    plt.savefig("../images/onlineupdate.png",dpi=300,bbox_inches='tight')
     plt.show()
     
     # Final assertions
     assert len(model.coef_) == 10
     assert model.model.X_.shape[1] == 10
 
-if __name__ == "__main__":
+def test_with_builtin_models():
+    print("=== Testing LassoHomotopyModel vs. Scikit-learn Lasso ===")
     
+    # 1. Generate Synthetic Data (Controlled Experiment)
+    X, y = load_data()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # 2. Train Models
+    homotopy_model = LassoHomotopyModel(lambda_par=1.0, fit_intercept=True, max_iter=1000)
+    results = homotopy_model.fit(X_train, y_train)
+    homotopy_preds = results.predict(X_test)
+
+    lasso_model = Lasso(alpha=1.0, max_iter=1000, fit_intercept=True,random_state=42)
+    lasso_model.fit(X_train, y_train)
+    lasso_preds = lasso_model.predict(X_test)
+
+    # 3. Performance Metrics
+    def evaluate_model(name, y_true, y_pred):
+        mse = mean_squared_error(y_true, y_pred)
+        mae = mean_absolute_error(y_true, y_pred)
+        r2 = r2_score(y_true, y_pred)
+        sparsity = np.mean(y_pred == 0) if hasattr(y_pred, '__len__') else 0
+        return {
+            "Model": name,
+            "MSE": mse,
+            "MAE": mae,
+            "R²": r2,
+            "Sparsity (%)": sparsity * 100
+        }
+
+    results = [
+        evaluate_model("LassoHomotopy", y_test, homotopy_preds),
+        evaluate_model("Scikit-Lasso", y_test, lasso_preds)
+    ]
+
+    print("\n=== Performance Comparison ===")
+    for res in results:
+        print(
+            f"{res['Model']:>12} | "
+            f"MSE: {res['MSE']:.4f} | "
+            f"MAE: {res['MAE']:.4f} | "
+            f"R²: {res['R²']:.4f} | "
+            f"Sparsity: {res['Sparsity (%)']:.2f}%"
+        )
+
+    plt.style.use('dark_background')
+    plt.rcParams.update({
+        'font.size': 10,
+        'axes.titlesize': 12,
+        'axes.labelsize': 10,
+        'xtick.labelsize': 9,
+        'ytick.labelsize': 9,
+        'axes.grid': True,
+        'grid.alpha': 0.1,
+        'figure.facecolor': '#121212',
+        'axes.facecolor': '#1e1e1e',
+        'axes.edgecolor': '0.8',
+        'text.color': 'white'
+    })
+
+    fig, axes = plt.subplots(1, 3, figsize=(12, 5))
+    fig.suptitle("Model Comparison: LassoHomotopy vs. Scikit-Lasso", 
+                fontsize=14, fontweight='bold', y=1.02, color='white')
+
+    # Color palette optimized for dark background
+    colors = {
+        'homotopy': '#4dacd1',  # Light blue
+        'lasso': '#f1a340',     # Orange
+        'reference': '#e0e0e0', # Light gray
+        'highlight': '#4d4d4d'  # Dark gray
+    }
+
+    # --- Plot 1: Actual vs. Predicted ---
+    axes[0].scatter(y_test, homotopy_preds, alpha=0.8, 
+                label='LassoHomotopy', color=colors['homotopy'],
+                edgecolor=colors['reference'], linewidth=0.3)
+    axes[0].scatter(y_test, lasso_preds, alpha=0.8, 
+                label='Scikit-Lasso', color=colors['lasso'],
+                edgecolor=colors['reference'], linewidth=0.3)
+    axes[0].plot([min(y_test), max(y_test)], [min(y_test), max(y_test)], 
+                linestyle='--', color=colors['reference'], linewidth=1.2, 
+                label='Perfect Fit')
+    axes[0].set_title("Actual vs. Predicted Values", pad=12, color='white')
+    axes[0].set_xlabel("Actual Values")
+    axes[0].set_ylabel("Predicted Values")
+    axes[0].legend(framealpha=0.2, edgecolor='0.8')
+
+    # Add correlation coefficient annotation
+    homotopy_r = np.corrcoef(y_test, homotopy_preds)[0,1]
+    lasso_r = np.corrcoef(y_test, lasso_preds)[0,1]
+    axes[0].text(0.05, 0.9, f'$r_{{Homotopy}}$ = {homotopy_r:.3f}', 
+                transform=axes[0].transAxes, color=colors['homotopy'])
+    axes[0].text(0.05, 0.83, f'$r_{{Lasso}}$ = {lasso_r:.3f}', 
+                transform=axes[0].transAxes, color=colors['lasso'])
+
+    # --- Plot 2: Residual Analysis ---
+    axes[1].scatter(homotopy_preds, y_test - homotopy_preds, alpha=0.8, 
+                color=colors['homotopy'], label='LassoHomotopy',
+                edgecolor=colors['reference'], linewidth=0.3)
+    axes[1].scatter(lasso_preds, y_test - lasso_preds, alpha=0.8, 
+                color=colors['lasso'], label='Scikit-Lasso',
+                edgecolor=colors['reference'], linewidth=0.3)
+    axes[1].axhline(0, color=colors['reference'], linestyle='--', linewidth=1)
+    axes[1].set_title("Residual Analysis", pad=12, color='white')
+    axes[1].set_xlabel("Predicted Values")
+    axes[1].set_ylabel("Residuals (Actual - Predicted)")
+    axes[1].legend(framealpha=0.2, edgecolor='0.8')
+
+    # Add residual statistics
+    axes[1].text(0.05, 0.9, f'Homotopy MSE: {mean_squared_error(y_test, homotopy_preds):.2f}', 
+                transform=axes[1].transAxes, color=colors['homotopy'])
+    axes[1].text(0.05, 0.83, f'Lasso MSE: {mean_squared_error(y_test, lasso_preds):.2f}', 
+                transform=axes[1].transAxes, color=colors['lasso'])
+
+    # --- Plot 3: Coefficient Comparison ---
+    width = 0.35
+    x = np.arange(X.shape[1])
+    axes[2].bar(x - width/2, homotopy_model.coef_, width, 
+            label='LassoHomotopy', color=colors['homotopy'],
+            edgecolor=colors['reference'], linewidth=0.5)
+    axes[2].bar(x + width/2, lasso_model.coef_, width, 
+            label='Scikit-Lasso', color=colors['lasso'],
+            edgecolor=colors['reference'], linewidth=0.5)
+    axes[2].axhline(0, color=colors['reference'], linestyle='-', linewidth=0.7)
+    axes[2].set_title("Feature Coefficients Comparison", pad=12, color='white')
+    axes[2].set_xlabel("Feature Index")
+    axes[2].set_ylabel("Coefficient Value")
+    axes[2].legend(framealpha=0.2, edgecolor='0.8')
+
+    # Highlight important features
+    axes[2].axhspan(-0.1, 0.1, facecolor=colors['highlight'], alpha=0.3, zorder=0)
+    axes[2].text(0.02, 0.95, 'Gray band: Near-zero coefficients', 
+                transform=axes[2].transAxes, color=colors['reference'], fontsize=8)
+
+    plt.tight_layout()
+    plt.subplots_adjust(top=0.85)
+    plt.savefig("../images/benchmarkcompare_dark.png", dpi=300, bbox_inches='tight', facecolor='#121212')
+    plt.show()
+
+
+if __name__ == "__main__":
     test_basic_prediction()
     test_prediction_visualization()
     test_single_feature()
@@ -753,5 +942,5 @@ if __name__ == "__main__":
     test_prediction_consistency()
     test_feature_importance()
     test_update_model()
-    
+    test_with_builtin_models()
     print("All tests passed!")
