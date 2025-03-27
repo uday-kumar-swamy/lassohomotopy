@@ -10,20 +10,20 @@ class LassoHomotopy:
     """
     
     def __init__(self, lambda_par=1.0, max_iter=1000, tol=1e-4, fit_intercept=True):
-        self.lambda_par = lambda_par          # Regularization parameter (µ)
-        self.max_iter = max_iter    # Maximum iterations for batch fitting
-        self.tol = tol              # Convergence tolerance
+        self.lambda_par = lambda_par  # Regularization parameter (µ)
+        self.max_iter = max_iter      # Maximum iterations for batch fitting
+        self.tol = tol                # Convergence tolerance
         self.fit_intercept = fit_intercept
-        self.coef_ = None           # Model coefficients (θ)
-        self.intercept_ = 0.0       # Intercept term
-        self.active_set = []        # Active feature set
-        self.signs = []             # Signs of active coefficients (v)
-        self.X_mean_ = None         # For standardization
-        self.X_std_ = None          # For standardization
-        self.y_mean_ = 0.0          # For centering
-        self.inv_XtX = None         # For rank-1 updates
-        self.X_ = None              # Storage for online updates
-        self.y_ = None              # Storage for online updates
+        self.coef_ = None             # Model coefficients (θ)
+        self.intercept_ = 0.0         # Intercept term
+        self.active_set = []          # Active feature set
+        self.signs = []               # Signs of active coefficients (v)
+        self.X_mean_ = None           # For standardization
+        self.X_std_ = None            # For standardization
+        self.y_mean_ = 0.0            # For centering
+        self.inv_XtX = None           # For rank-1 updates
+        self.X_ = None                # Storage for online updates
+        self.y_ = None                # Storage for online updates
 
     def _standardize(self, X, y=None, fit=False):
         """Handle standardization with proper shape checking"""
@@ -43,8 +43,7 @@ class LassoHomotopy:
             return X, y
         else:
             if self.fit_intercept:
-                # Ensure proper broadcasting for single samples
-                X_std = (X - self.X_mean_.reshape(1, -1)) / self.X_std_.reshape(1, -1)
+                X_std = (X - self.X_mean_) / self.X_std_
                 return X_std, y
             return X, y
 
@@ -58,6 +57,18 @@ class LassoHomotopy:
         self.X_ = X_std.copy()
         self.y_ = y_centered.copy()
         
+        # Special case: if lambda is very small, use OLS solution
+        if self.lambda_par < 1e-8:
+            try:
+                print("im in special case")
+                self.coef_ = np.linalg.inv(X_std.T @ X_std) @ X_std.T @ y_centered
+            except np.linalg.LinAlgError:
+                self.coef_ = np.linalg.pinv(X_std.T @ X_std) @ X_std.T @ y_centered
+            
+            if self.fit_intercept:
+                self.intercept_ = self.y_mean_ - np.dot(self.X_mean_ / self.X_std_, self.coef_)
+            return self
+        
         # Initialize with most correlated feature
         correlation = X_std.T @ y_centered / n_samples
         j_init = np.argmax(np.abs(correlation))
@@ -69,7 +80,7 @@ class LassoHomotopy:
             X_active = X_std[:, self.active_set]
             sign_vector = np.array(self.signs)
             
-            # Solve for active coefficients (Step 4 update)
+            # Solve for active coefficients
             try:
                 self.inv_XtX = np.linalg.inv(
                     X_active.T @ X_active + self.lambda_par * np.eye(len(self.active_set)))
@@ -117,6 +128,13 @@ class LassoHomotopy:
         
         return self
 
+    def predict(self, X):
+        """Predict with proper standardization"""
+        if self.coef_ is None:
+            raise ValueError("Model not fitted yet")
+        X_std, _ = self._standardize(X)
+        return X_std @ self.coef_ + self.intercept_
+    
     def update_model(self, x_new, y_new, lambda_par_new=None):
         """
         Online update per Algorithm 1:
