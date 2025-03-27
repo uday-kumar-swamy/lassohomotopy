@@ -248,6 +248,8 @@ This benchmark test compares our LassoHomotopy implementation against scikit-lea
 
 This test serves as both a validation of our implementation and a demonstration of how it compares to a standard LASSO implementation in terms of both performance and sparsity characteristics.
 
+### Note :-
+Additional test case visualisations has been saved in `/images` folder, the respective reports for each test cases has been included, please run the test cases by running `pytest test_LassoHomotopy.py -s`
 
 ## Implementation Q&A
 
