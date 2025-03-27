@@ -699,7 +699,7 @@ def test_feature_importance():
     plt.ylabel('Coefficient Value')
     plt.title('Feature Coefficients (Importance)')
     plt.grid(True)
-    plt.savefig("../images/eatureimportance.png",dpi=300, bbox_inches='tight')
+    plt.savefig("../images/featureimportance.png",dpi=300, bbox_inches='tight')
     plt.show()
     
 def test_update_model():
