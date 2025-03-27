@@ -6,7 +6,7 @@
 3. [Installation](#installation)
 4. [Usage](#usage)
 5. [Testing](#testing)
-6. [Implementation](#ImplementationQ&A)
+6. [Implementation](#Implementation)
 8. [References](#references)
 
 ## Project Overview
@@ -133,7 +133,7 @@ Sample output visualization:
 ![onlineupdate](LassoHomotopy/images/onlineupdate.png)
 ![Benchmark Comparison](LassoHomotopy/images/benchmarkcompare_dark.png)
 
-## ImplementationQ&A
+## Implementation
 
 ### 1. What does the model you have implemented do and when should it be used?
 
