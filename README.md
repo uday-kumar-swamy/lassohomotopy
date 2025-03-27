@@ -2,11 +2,12 @@
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
+2. [Team](#team)
 2. [Implementation Details](#implementation-details)
 3. [Installation](#installation)
 4. [Usage](#usage)
 5. [Testing](#testing)
-6. [Implementation](#Implementation)
+6. [Implementation](#implementation-qa)
 8. [References](#references)
 
 ## Project Overview
@@ -21,8 +22,13 @@ This project implements the LASSO (Least Absolute Shrinkage and Selection Operat
 Key features:
 - Efficient handling of sequential/streaming data
 - Automatic regularization parameter updates
-- Leave-one-out cross-validation capability
 - Visualization tools for model evaluation
+
+## Team
+- Medhavini Puthalapattu (A20551170)
+- Uday Kumar Swamy (A20526852)
+- Sai Kartheek Goli (A20546631)
+- Uday Venkatesha (A20547055)
 
 ## Implementation Details
 
@@ -128,12 +134,127 @@ pytest test_LassoHomotopy.py -v
 ```
 
 Sample output visualization:
-![Basic report](LassoHomotopy/images/basic_report.png)
-![Basic prediction](LassoHomotopy/images/basic_prediction.png)
-![onlineupdate](LassoHomotopy/images/onlineupdate.png)
-![Benchmark Comparison](LassoHomotopy/images/benchmarkcompare_dark.png)
+### basic report
+**Purpose**:  
+This comprehensive test validates the core functionality of the LassoHomotopy model by:
 
-## Implementation
+1. Performing an end-to-end test of model fitting and prediction
+2. Generating detailed diagnostics about model performance
+3. Verifying sparsity properties of the solution
+
+**Key Validations**:
+- Checks prediction shape and range
+- Verifies non-trivial learning (predictions ≠ 0)
+- Tests basic performance metrics (R² > 0.3)
+- Confirms expected sparsity behavior
+
+**Output Includes**:
+- Data characteristics (samples, features, target stats)
+- Model parameters used
+- Performance metrics (MSE, MAE, R², correlation)
+- Sparsity analysis (zero/non-zero coefficients)
+- Prediction statistics (range, min/max)
+
+**Visual Outputs**:
+- Actual vs. predicted values plot
+- Feature coefficients stem plot
+- Prediction error distribution histogram
+
+This test serves as the foundation for verifying that the model meets basic LASSO regression expectations before proceeding to more specialized tests.
+
+**Example Output**:
+![Basic report](LassoHomotopy/images/basic_report.png)
+
+![Basic prediction](LassoHomotopy/images/basic_prediction.png)
+
+
+### update model
+
+**Purpose**:  
+This test validates the online updating capability of the LassoHomotopy model by:
+
+1. Testing incremental learning with new data points
+2. Verifying proper handling of different update scenarios
+3. Visualizing coefficient evolution during updates
+
+**Key Features Tested**:
+- Sequential single-point updates
+- Batch updates (multiple points)
+- Handling of outlier samples
+- Zero-feature inputs
+- Dynamic regularization parameter changes
+
+**Test Cases**:
+1. Normal sample update
+2. Outlier sample update (3x noise)
+3. Zero-feature vector update
+4. Batch update (5 samples)
+5. Lambda parameter change during update
+
+**Visual Outputs**:
+1. **Coefficient Trajectories Plot**:
+   - Shows how each feature's coefficient evolves through updates
+   - Highlights stability/volatility of coefficients
+
+2. **Coefficient Magnitudes Heatmap**:
+   - Visualizes absolute coefficient values across updates
+   - Uses color intensity to show relative importance
+
+**Validation Metrics**:
+- Final coefficient vector shape (must match input dimension)
+- Active set size tracking
+- Maximum coefficient change between updates
+- Model consistency after parameter changes
+
+This test is particularly valuable for streaming data applications, demonstrating how the model maintains performance while efficiently incorporating new information.
+
+**Example Output**:
+![onlineupdate](LassoHomotopy/images/onlineupdate.png)
+
+
+### BenchMark Testing
+
+**Purpose**:
+This benchmark test compares our LassoHomotopy implementation against scikit-learn's Lasso model to:
+
+1. Validate correctness against an established implementation
+2. Compare predictive performance metrics
+3. Analyze sparsity characteristics
+4. Visualize differences in model behavior
+
+**Key Comparisons**:
+- Predictive accuracy (MSE, MAE, R²)
+- Sparsity induction (percentage of zero coefficients)
+- Feature coefficient patterns
+- Residual distributions
+
+**Test Methodology**:
+1. Splits data into 80/20 train-test sets
+2. Trains both models with identical λ=1.0 regularization
+3. Evaluates on identical test data
+4. Generates side-by-side visualizations
+
+**Visual Outputs**:
+1. **Actual vs Predicted Values**:
+   - Shows prediction accuracy for both models
+   - Includes correlation coefficients (r) for each
+
+2. **Residual Analysis**:
+   - Compares error distributions
+   - Displays MSE values directly on plot
+
+3. **Coefficient Comparison**:
+   - Bar plot of feature coefficients
+   - Highlights near-zero coefficients (gray band)
+
+
+**Example Visualization**:
+![Benchmark Comparison](images/benchmarkcompare_dark.png)
+
+This test serves as both a validation of our implementation and a demonstration of how it compares to a standard LASSO implementation in terms of both performance and sparsity characteristics.
+
+
+## Implementation Q&A
 
 ### 1. What does the model you have implemented do and when should it be used?
 
@@ -231,5 +352,3 @@ The implementation shows particularly strong performance on streaming data appli
 3. Efron, B., et al. (2004). Least angle regression. *Annals of Statistics*.
 
 For theoretical details, see the [original paper](https://people.eecs.berkeley.edu/~elghaoui/Pubs/hom_lasso_NIPS08.pdf).
-
-
