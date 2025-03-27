@@ -1,4 +1,4 @@
-# LASSO Homotopy Implementation
+# <div align="center"> Spring 2025 Machine Learning (CS-584-04/05)<br> LASSO Homotopy Implemenatation </div>
 
 ## Table of Contents
 1. [Project Overview](#project-overview)
@@ -243,7 +243,7 @@ This benchmark test compares our LassoHomotopy implementation against scikit-lea
    - Highlights near-zero coefficients (gray band)
 
 
-**Example Visualization**:
+**Visualization**:
 ![Benchmark Comparison](LassoHomotopy/images/benchmarkcompare_dark.png)
 
 This test serves as both a validation of our implementation and a demonstration of how it compares to a standard LASSO implementation in terms of both performance and sparsity characteristics.
@@ -350,3 +350,7 @@ The implementation shows particularly strong performance on streaming data appli
 3. Efron, B., et al. (2004). Least angle regression. *Annals of Statistics*.
 
 For theoretical details, see the [original paper](https://people.eecs.berkeley.edu/~elghaoui/Pubs/hom_lasso_NIPS08.pdf).
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
