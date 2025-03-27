@@ -704,10 +704,7 @@ def test_feature_importance():
     
 def test_update_model():
     """Test online updating of LassoHomotopy model with visualization"""
-    import matplotlib.pyplot as plt
-    
     # Set up visualization with proper matplotlib style
-    plt.style.use('default')  # Use default matplotlib style
     plt.rcParams.update({
         'figure.titlesize': 14,
         'axes.titlesize': 12,
